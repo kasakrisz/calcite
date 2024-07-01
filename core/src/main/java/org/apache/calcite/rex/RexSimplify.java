@@ -2214,8 +2214,14 @@ public class RexSimplify {
       final List<RexNode> reducedValues = new ArrayList<>();
       final RexNode simplifiedExpr = rexBuilder.makeCast(e.getType(), operand);
       executor.reduce(rexBuilder, ImmutableList.of(simplifiedExpr), reducedValues);
-      return requireNonNull(
-          Iterables.getOnlyElement(reducedValues));
+      RexNode reducedRexNode = requireNonNull(Iterables.getOnlyElement(reducedValues));
+      if (reducedRexNode instanceof RexCall) {
+        RexNode reducedOperand = ((RexCall)reducedRexNode).getOperands().get(0);
+        if (sameTypeOrNarrowsNullability(reducedRexNode.getType(), reducedOperand.getType())) {
+          return reducedOperand;
+        }
+      }
+      return reducedRexNode;
     default:
       if (operand == e.getOperands().get(0)) {
         return e;
