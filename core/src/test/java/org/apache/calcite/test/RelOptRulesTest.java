@@ -2699,6 +2699,60 @@ class RelOptRulesTest extends RelOptTestBase {
         .check();
   }
 
+  /** Tests a variant of {@link FilterProjectTransposeRule}
+   * that pushes a Filter that contains a correlating variable. */
+  @Test void testFilterProjectTransposeOOM() {
+    final Function<RelBuilder, RelNode> relFn = b ->
+        b.scan("EMP")
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field("ENAME"), b.field("ENAME")))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .project(b.call(SqlStdOperatorTable.CONCAT, b.field(0), b.field(0)))
+            .filter(b.call(SqlStdOperatorTable.EQUALS, b.field(0), b.literal("Something")))
+            .build();
+    final FilterProjectTransposeRule filterProjectTransposeRule =
+        CoreRules.FILTER_PROJECT_TRANSPOSE.config
+            .withOperandSupplier(b0 ->
+                b0.operand(Filter.class).predicate(filter -> true)
+                    .oneInput(b1 ->
+                        b1.operand(Project.class).predicate(project -> true)
+                            .anyInputs()))
+            .as(FilterProjectTransposeRule.Config.class)
+            .withCopyFilter(true)
+            .withCopyProject(true)
+            .toRule();
+    relFn(relFn)
+        .withDecorrelate(false)
+        .withExpand(true)
+        .withRule(filterProjectTransposeRule)
+        .check();
+  }
+
   private static final String NOT_STRONG_EXPR =
       "case when e.sal < 11 then 11 else -1 * e.sal end";
 
